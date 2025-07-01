@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [form, setForm] = useState({
@@ -12,10 +12,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState("");
   const [autorizado, setAutorizado] = useState(false);
+  const resultadoRef = useRef(null);
 
   useEffect(() => {
     const acceso = localStorage.getItem("accesoPermitido");
     if (acceso === "true") setAutorizado(true);
+
+    // Inyectar script de html2pdf.js
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    script.defer = true;
+    document.body.appendChild(script);
   }, []);
 
   const handleChange = (campo, valor) => {
@@ -43,6 +50,14 @@ export default function Home() {
     const res = await fetch("/api/checkout", { method: "POST" });
     const data = await res.json();
     if (data.url) window.location.href = data.url;
+  };
+
+  const descargarPDF = () => {
+    if (!window.html2pdf || !resultadoRef.current) return;
+    window.html2pdf()
+      .from(resultadoRef.current)
+      .set({ margin: 1, filename: "documento-legal.pdf", html2canvas: { scale: 2 } })
+      .save();
   };
 
   return (
@@ -94,7 +109,14 @@ export default function Home() {
           </button>
 
           {resultado && (
-            <pre style={{ marginTop: "2rem", whiteSpace: "pre-wrap" }}>{resultado}</pre>
+            <div style={{ marginTop: "2rem" }}>
+              <pre ref={resultadoRef} style={{ whiteSpace: "pre-wrap", border: "1px solid #ccc", padding: "1rem" }}>
+                {resultado}
+              </pre>
+              <button onClick={descargarPDF} style={{ marginTop: "1rem" }}>
+                📄 Descargar PDF
+              </button>
+            </div>
           )}
         </>
       )}
