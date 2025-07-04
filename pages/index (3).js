@@ -1,1 +1,0 @@
-Archivo generado correctamente con la versión visual del sitio.
