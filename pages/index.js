@@ -13,7 +13,7 @@ export default function Home() {
     if (acceso === "true") setAutorizado(true);
 
     const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    script.src = "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
     script.defer = true;
     document.body.appendChild(script);
   }, []);
@@ -23,13 +23,14 @@ export default function Home() {
     setLoading(true);
     setResultado("");
 
-    const prompt = \`
-Eres un abogado experto en legislación española. Un cliente ha descrito lo que necesita legalmente. 
-Tu tarea es redactar un documento legal COMPLETO, válido y profesional para esta situación, redactado 
-con lenguaje legal real. No incluyas explicaciones, solo el texto del documento. Aquí va la descripción del cliente:
+    const prompt = `
+Eres un abogado experto en legislación española. Un cliente ha descrito lo que necesita legalmente.
+Tu tarea es redactar un documento legal COMPLETO, válido y profesional para esta situación,
+redactado con lenguaje legal real. No incluyas explicaciones, solo el texto del documento.
+Aquí va la descripción del cliente:
 
-"\${descripcion}"
-\`;
+"${descripcion}"
+`;
 
     const response = await fetch("/api/generar", {
       method: "POST",
@@ -57,60 +58,70 @@ con lenguaje legal real. No incluyas explicaciones, solo el texto del documento.
     }
   };
 
-  const previewLimit = 1200;
+  const previewLimit = 1200; // caracteres visibles antes del corte
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-800 px-4 py-8">
+    <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
       <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-4xl font-bold text-center text-blue-700">Redactador Legal Exprés</h1>
-        <p className="text-center text-gray-600">Tu contrato legal, redactado por IA, en minutos.</p>
+        <h1 className="text-3xl font-bold text-center">Redactador Legal Exprés</h1>
+        <p className="text-center text-gray-600">
+          Describe tu situación legal y genera un documento personalizado.
+        </p>
 
-        <textarea
-          value={descripcion}
-          onChange={(e) => setDescripcion(e.target.value)}
-          rows={5}
-          placeholder="Describe aquí para qué necesitas tu contrato o documento legal..."
-          className="w-full p-4 border border-gray-300 rounded-lg shadow-sm resize-none"
-        />
+        {!autorizado ? (
+          <div className="text-center text-red-600">
+            Acceso restringido. Debes realizar el pago para acceder.
+          </div>
+        ) : (
+          <>
+            <textarea
+              rows={4}
+              className="w-full p-3 border rounded-md"
+              placeholder="Describe tu situación legal..."
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+            />
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          {loading ? "Generando..." : "Generar contrato legal"}
-        </button>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition"
+            >
+              {loading ? "Generando..." : "Generar documento"}
+            </button>
 
-        {resultado && (
-          <div className="bg-white p-4 rounded-lg shadow-md space-y-4">
-            <h2 className="text-xl font-semibold text-green-700">Vista previa del contrato:</h2>
-            <div ref={resultadoRef} className="whitespace-pre-wrap border-l-4 border-green-400 pl-4">
-              {autorizado ? resultado : resultado.slice(0, previewLimit) + "..."}
-            </div>
-
-            {!autorizado ? (
-              <div className="text-center">
-                <p className="text-sm text-gray-500 mb-2">
-                  Para ver el contrato completo y poder descargarlo, haz clic abajo:
-                </p>
-                <button
-                  onClick={redirigirAPago}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            {resultado && (
+              <div className="bg-white border p-4 rounded-md space-y-4">
+                <h2 className="text-lg font-semibold">Vista previa:</h2>
+                <div
+                  ref={resultadoRef}
+                  className="whitespace-pre-wrap text-sm text-gray-700"
                 >
-                  Desbloquear contrato completo (1,99 €)
-                </button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <button
-                  onClick={descargarPDF}
-                  className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-black transition"
-                >
-                  Descargar en PDF
-                </button>
+                  {resultado.length > previewLimit
+                    ? resultado.slice(0, previewLimit) + "..."
+                    : resultado}
+                </div>
+
+                {resultado.length > previewLimit && (
+                  <button
+                    onClick={redirigirAPago}
+                    className="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition"
+                  >
+                    Ver completo por 1,99 €
+                  </button>
+                )}
+
+                {resultado.length <= previewLimit && (
+                  <button
+                    onClick={descargarPDF}
+                    className="w-full bg-gray-800 text-white p-2 rounded-md hover:bg-gray-900 transition"
+                  >
+                    Descargar PDF
+                  </button>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
